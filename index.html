@@ -85,18 +85,35 @@
 
         /* --- POS Grid --- */
         .grid-products { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
         .product-item {
             background: var(--white); border-radius: 16px; padding: 15px 10px;
-            text-align: center; border: 1px solid var(--border-color); cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02); position: relative;
+            text-align: center; border: 2px solid var(--border-color); cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02); position: relative; transition: 0.2s;
         }
-        .product-item:active { transform: scale(0.96); border-color: var(--pink-primary);}
-        .product-item.disabled { opacity: 0.5; pointer-events: none; }
+        .product-item:active { transform: scale(0.96); }
+        .product-item.disabled { opacity: 0.5; pointer-events: none; border-color: transparent; }
+        
+        /* สไตล์เมื่อเลือกสินค้าแล้ว (มีของในตะกร้า) */
+        .product-item.selected {
+            border-color: var(--pink-primary);
+            background-color: #fff5f8;
+        }
+        .check-icon {
+            position: absolute; top: 10px; right: 10px;
+            width: 22px; height: 22px; background: var(--pink-primary);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 2px 5px var(--pink-shadow);
+        }
+        .check-icon svg { width: 14px; height: 14px; fill: var(--white); }
+        
         .p-icon { width: 40px; height: 40px; background: var(--pink-light); border-radius: 10px; display: flex; justify-content: center; align-items: center; margin: 0 auto 10px auto;}
         .p-icon svg { width: 20px; height: 20px; fill: var(--pink-primary); }
         .p-name { color: var(--text-dark); font-size: 14px; font-weight: 500; margin-bottom: 5px; line-height: 1.2; }
         .p-price { color: var(--pink-primary); font-size: 15px; font-weight: 600; }
-        .p-badge { position: absolute; top: 10px; right: 10px; background: #fff0f5; color: var(--pink-primary); font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: 500;}
+        
+        /* ป้ายแจ้งสต๊อก (ย้ายมาซ้ายมือเพื่อไม่ให้ทับกับติ๊กถูก) */
+        .p-badge { position: absolute; top: 10px; left: 10px; background: #fff0f5; color: var(--pink-primary); font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: 500;}
 
         /* --- Cart --- */
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px dashed var(--border-color); }
@@ -194,7 +211,7 @@
                 <p style="color:var(--text-gray); text-align:center; font-size: 14px; margin-bottom: 30px;">เข้าสู่ระบบจัดการร้าน Pinkjulieland</p>
                 
                 <div class="input-group">
-                    <label>อีเมล</label>
+                    <label>อีเมลผู้ดูแลร้าน</label>
                     <input type="email" id="login-email" class="input-field" placeholder="Admin Email">
                 </div>
                 <div class="input-group">
@@ -329,7 +346,7 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        // API Keys (ไม่ต้องแก้แล้ว)
+        // API Keys
         const SUPABASE_URL = 'https://qrttkykdkzgpvvqswtza.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFydHRreWtka3pncHZ2cXN3dHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwOTI2NzgsImV4cCI6MjA5MDY2ODY3OH0.FDLDA4BdYcxfSsotTXKZwDF1EjJ6AO0qmFyrGkV3Mj4';
         
@@ -339,20 +356,31 @@
         let products = [];
         let cart = [];
         let billsHistory = [];
-        let currentBillForCopy = null; // เก็บข้อมูลบิลไว้ก๊อปปี้
+        let currentBillForCopy = null;
 
         const showLoader = (show) => document.getElementById('loader').style.display = show ? 'flex' : 'none';
         
         const showToast = (msg, isSuccess = true) => {
             const toast = document.getElementById('toast');
             document.getElementById('toast-text').innerText = msg;
-            // เปลี่ยนไอคอนตามสถานะ
             document.getElementById('toast-icon').innerHTML = isSuccess 
-                ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>' // ติ๊กถูก
-                : '<path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>'; // กากบาท
+                ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>'
+                : '<path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>';
             
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2500);
+        };
+
+        const formatThaiTime = (dateString, formatType) => {
+            let dStr = dateString;
+            if (!dStr.endsWith('Z') && !dStr.includes('+')) dStr += 'Z'; 
+            
+            const d = new Date(dStr);
+            if (formatType === 'short') {
+                return d.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } else {
+                return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            }
         };
 
         // ==========================================
@@ -363,7 +391,7 @@
             document.getElementById(`page-${tab}`).classList.add('active');
             
             if (tab === 'login' || tab === 'bill-detail') {
-                document.getElementById('bottom-nav').style.display = 'none'; // ซ่อนเมนูล่างในหน้า Login และ หน้าดูบิล
+                document.getElementById('bottom-nav').style.display = 'none';
             } else {
                 document.getElementById('bottom-nav').style.display = 'flex';
                 document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -371,7 +399,10 @@
                     document.getElementById(`tab-${tab}`).classList.add('active');
                 }
                 
-                if (tab === 'pos') loadProducts();
+                if (tab === 'pos') {
+                    if (products.length === 0) loadProducts();
+                    else renderProductsGrid(); // อัปเดต UI กรอบสีชมพูเสมอ
+                }
                 if (tab === 'stock') loadStock();
                 if (tab === 'cart') renderCart();
                 if (tab === 'bills') loadBills();
@@ -383,11 +414,17 @@
         // ==========================================
         async function checkSession() {
             showLoader(true);
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                switchTab('pos');
-            } else {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                
+                if (session) {
+                    currentUser = session.user;
+                    switchTab('pos');
+                } else {
+                    switchTab('login');
+                }
+            } catch (err) {
                 switchTab('login');
             }
             showLoader(false);
@@ -416,6 +453,7 @@
             showLoader(true);
             await supabase.auth.signOut();
             currentUser = null; cart = []; updateCartBadge();
+            renderProductsGrid(); // ล้างกรอบสีชมพูเมื่อออกระบบ
             switchTab('login');
             showLoader(false);
         };
@@ -428,30 +466,42 @@
             const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: true });
             if (!error) {
                 products = data;
-                const grid = document.getElementById('product-grid');
-                grid.innerHTML = '';
-                
-                products.forEach(p => {
-                    const isOut = p.is_limited && p.stock <= 0;
-                    const div = document.createElement('div');
-                    div.className = `product-item ${isOut ? 'disabled' : ''}`;
-                    div.onclick = () => { if(!isOut) addToCart(p); };
-                    
-                    let svgIcon = '<path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>';
-                    if(p.name.includes('แอป') || p.name.includes('GN')) svgIcon = '<path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>';
-                    if(p.name.includes('เว็บ')) svgIcon = '<path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>';
-                    
-                    div.innerHTML = `
-                        ${p.is_limited ? `<div class="p-badge">${isOut ? 'หมด' : 'เหลือ '+p.stock}</div>` : ''}
-                        <div class="p-icon"><svg viewBox="0 0 24 24">${svgIcon}</svg></div>
-                        <div class="p-name">${p.name}</div>
-                        <div class="p-price">${p.price}.-</div>
-                    `;
-                    grid.appendChild(div);
-                });
+                renderProductsGrid();
             }
             showLoader(false);
         }
+
+        // แยกฟังก์ชันการวาดสินค้าออกมา เพื่อให้อัปเดต UI (กรอบสีชมพู) ได้ง่ายๆ
+        window.renderProductsGrid = () => {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            products.forEach(p => {
+                const isOut = p.is_limited && p.stock <= 0;
+                const isInCart = cart.find(i => i.id === p.id); // เช็คว่ามีในตะกร้าไหม
+                
+                const div = document.createElement('div');
+                div.className = `product-item ${isOut ? 'disabled' : ''} ${isInCart ? 'selected' : ''}`;
+                div.onclick = () => { if(!isOut) addToCart(p); };
+                
+                // ไอคอนสินค้า
+                let svgIcon = '<path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>';
+                if(p.name.includes('แอป') || p.name.includes('GN')) svgIcon = '<path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>';
+                if(p.name.includes('เว็บ')) svgIcon = '<path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>';
+                
+                // ติ๊กถูกสีชมพู
+                const checkIconHtml = isInCart ? `<div class="check-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>` : '';
+                
+                div.innerHTML = `
+                    ${p.is_limited ? `<div class="p-badge">${isOut ? 'หมด' : 'เหลือ '+p.stock}</div>` : ''}
+                    ${checkIconHtml}
+                    <div class="p-icon"><svg viewBox="0 0 24 24">${svgIcon}</svg></div>
+                    <div class="p-name">${p.name}</div>
+                    <div class="p-price">${p.price}.-</div>
+                `;
+                grid.appendChild(div);
+            });
+        };
 
         window.addToCart = (product) => {
             const item = cart.find(i => i.id === product.id);
@@ -462,8 +512,9 @@
             if (item) item.qty++;
             else cart.push({ ...product, qty: 1 });
             
-            showToast(`เพิ่ม ${product.name}`);
+            showToast(item ? `เพิ่มจำนวน ${product.name}` : `เลือก ${product.name} แล้ว`);
             updateCartBadge();
+            renderProductsGrid(); // อัปเดตติ๊กถูกทันที
         };
 
         window.updateQty = (id, change) => {
@@ -473,7 +524,10 @@
 
             item.qty += change;
             if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
-            renderCart(); updateCartBadge();
+            
+            renderCart(); 
+            updateCartBadge();
+            renderProductsGrid(); // เผื่อกรณีลบสินค้าออกจากตะกร้าจนหมด ติ๊กถูกจะได้หายไป
         };
 
         function updateCartBadge() {
@@ -488,7 +542,7 @@
             const list = document.getElementById('cart-list');
             let total = 0;
             if(cart.length === 0) {
-                list.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-gray); font-size: 14px;">ยังไม่มีสินค้าในตระกร้า<br>ไปเลือกสินค้ากันเลยค่ะ</div>`;
+                list.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-gray); font-size: 14px;">ยังไม่มีสินค้าในตระกร้า</div>`;
                 document.getElementById('cart-total').innerText = '0.-';
                 document.getElementById('btn-pay').disabled = true;
                 return;
@@ -529,26 +583,23 @@
                 const { count } = await supabase.from('bills').select('*', { count: 'exact', head: true });
                 const billNumber = 'PJ' + String((count || 0) + 1).padStart(4, '0');
 
-                // บันทึกบิล
                 const { data: billData, error: billErr } = await supabase.from('bills')
                     .insert([{ bill_number: billNumber, customer_name: customer, total: total, created_by: currentUser.id }])
                     .select().single();
                 if(billErr) throw billErr;
 
-                // บันทึกรายการ
                 const itemsToInsert = cart.map(item => ({ bill_id: billData.id, product_name: item.name, price: item.price, qty: item.qty }));
                 await supabase.from('bill_items').insert(itemsToInsert);
 
-                // ตัดสต๊อก
                 for (let item of cart) {
                     if (item.is_limited) await supabase.from('products').update({ stock: item.stock - item.qty }).eq('id', item.id);
                 }
 
-                // รีเซ็ตตะกร้า
                 cart = []; updateCartBadge(); document.getElementById('customer-name').value = '';
                 
                 showToast('สร้างบิลสำเร็จ');
-                // โหลดรายละเอียดบิลที่เพิ่งสร้างและแสดง
+                // อัปเดตกรอบสีชมพูในหน้าสินค้าออก
+                await loadProducts(); 
                 await viewBillDetail(billData.id);
 
             } catch (error) {
@@ -558,7 +609,6 @@
             showLoader(false);
         };
 
-        // โหลดประวัติบิลทั้งหมด
         async function loadBills() {
             showLoader(true);
             const { data, error } = await supabase.from('bills').select('*').order('created_at', { ascending: false });
@@ -570,7 +620,7 @@
                     list.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-gray);">ยังไม่มีประวัติการขาย</div>`;
                 } else {
                     data.forEach(b => {
-                        const date = new Date(b.created_at).toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        const date = formatThaiTime(b.created_at, 'short');
                         list.innerHTML += `
                             <div class="list-row" onclick="viewBillDetail('${b.id}')">
                                 <div>
@@ -586,14 +636,13 @@
             showLoader(false);
         }
 
-        // ดูรายละเอียดบิล 1 ใบ
         window.viewBillDetail = async (billId) => {
             showLoader(true);
             const { data: bill } = await supabase.from('bills').select('*').eq('id', billId).single();
             const { data: items } = await supabase.from('bill_items').select('*').eq('bill_id', billId);
             
             if(bill && items) {
-                const date = new Date(bill.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const date = formatThaiTime(bill.created_at, 'long');
                 const box = document.getElementById('receipt-content');
                 
                 let itemsHtml = '';
@@ -614,7 +663,6 @@
                     <div class="receipt-total"><span>รวมทั้งสิ้น</span><span>${bill.total}.-</span></div>
                 `;
 
-                // เตรียมข้อความสำหรับก๊อปปี้ (ไม่มี Emoji)
                 currentBillForCopy = `[ สรุปยอดสั่งซื้อ ${bill.bill_number} ]\nคุณลูกค้า: ${bill.customer_name}\n\nรายการ:\n${copyTextItems}\nรวมทั้งสิ้น: ${bill.total}.-\n\nขอบคุณที่อุดหนุน Pinkjulieland ค่ะ`;
 
                 switchTab('bill-detail');
@@ -622,18 +670,15 @@
             showLoader(false);
         }
 
-        // คัดลอกข้อความสรุปยอด
         window.copyBillText = () => {
             if(!currentBillForCopy) return;
-            
-            // ใช้คำสั่งสำหรับก๊อปปี้ที่ทำงานได้ดีในมือถือ/iPad
             const textArea = document.createElement("textarea");
             textArea.value = currentBillForCopy;
             document.body.appendChild(textArea);
             textArea.select();
             try {
                 document.execCommand('copy');
-                showToast('คัดลอกข้อความแล้ว นำไปส่งให้ลูกค้าได้เลย');
+                showToast('คัดลอกข้อความแล้ว นำไปวางส่งลูกค้าได้เลย');
             } catch (err) {
                 showToast('ไม่สามารถคัดลอกได้', false);
             }
@@ -680,3 +725,4 @@
     </script>
 </body>
 </html>
+
