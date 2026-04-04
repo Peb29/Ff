@@ -8,29 +8,25 @@
     <!-- ฟอนต์ Mitr -->
     <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Libraries สำหรับสร้างรูปภาพและ PDF -->
+    <!-- Libraries สำหรับสลิป -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
-            /* Color Palette from Reference */
-            --bg-color: #FFF6F9;
-            --primary: #FF85A8;
-            --primary-light: #FFF0F5;
-            --primary-dark: #E86A91;
-            --text-dark: #5A2A3B;
-            --text-muted: #A38290;
+            /* ถอดสีจากเรฟเฟอเรนซ์ */
+            --bg-main: #FCF4F7;
             --surface: #FFFFFF;
+            --primary: #F285A4;
+            --primary-light: #FDE8EE;
+            --primary-gradient: linear-gradient(135deg, #F99BB5 0%, #ED6A8E 100%);
+            --text-dark: #4A2B35;
+            --text-muted: #A88B96;
             --border: #F7E1E9;
             
-            /* UI Variables */
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --radius-pill: 99px;
-            --shadow-sm: 0 4px 12px rgba(90, 42, 59, 0.05);
-            --shadow-md: 0 8px 24px rgba(255, 133, 168, 0.15);
             --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --shadow-sm: 0 4px 15px rgba(242, 133, 164, 0.08);
+            --shadow-md: 0 8px 25px rgba(237, 106, 142, 0.25);
         }
 
         * { box-sizing: border-box; font-family: 'Mitr', sans-serif; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -38,7 +34,7 @@
 
         .app-container {
             width: 100%; max-width: 428px; height: 100%; max-height: 100vh;
-            background-color: var(--bg-color); position: relative; overflow: hidden;
+            background-color: var(--bg-main); position: relative; overflow: hidden;
             display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.05);
         }
 
@@ -46,114 +42,123 @@
         .page.active { display: flex; animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Loader --- */
-        #loader { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255, 246, 249, 0.8); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        /* --- Loader & Toast --- */
+        #loader { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(252, 244, 247, 0.8); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid var(--primary-light); border-top: 4px solid var(--primary); border-radius: 50%; width: 44px; height: 44px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- Header --- */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 10px 24px; z-index: 10;}
-        .brand-name { font-weight: 700; color: var(--text-dark); font-size: 22px; line-height: 1.2; letter-spacing: 0.5px;}
-        .brand-sub { font-size: 13px; color: var(--primary); font-weight: 500; }
-        .bell-icon { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer;}
-        .bell-icon svg { width: 22px; height: 22px; fill: var(--primary); }
-        .icon-btn { position: absolute; left: 16px; top: 35px; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 50%; background: rgba(255,255,255,0.8); transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
-        .icon-btn:active { transform: scale(0.9); }
-        .icon-btn svg { width: 22px; height: 22px; fill: var(--text-dark); }
-
-        .content-area { flex: 1; overflow-y: auto; padding: 0 24px calc(100px + var(--safe-bottom)) 24px; z-index: 10; scrollbar-width: none;}
-        .content-area::-webkit-scrollbar { display: none; }
-
-        /* --- Welcome Text --- */
-        .welcome-section { text-align: center; margin: 20px 0 30px 0; }
-        .welcome-title { font-weight: 700; color: var(--text-dark); font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px;}
-        .welcome-title svg { width: 18px; height: 18px; fill: var(--primary); }
-        .welcome-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-
-        /* --- Fast Menu --- */
-        .fast-menu-title { text-align: center; font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 6px;}
-        .fast-menu-title svg { width: 14px; height: 14px; fill: var(--primary); }
-        
-        .fast-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;}
-        .fast-item { background: var(--primary-light); border-radius: 20px; padding: 16px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent;}
-        .fast-item.active { border-color: var(--primary); background: #FFE4EC; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 133, 168, 0.15);}
-        .fast-icon { margin-bottom: 8px; display: flex; justify-content: center; align-items: center;}
-        .fast-icon svg { width: 28px; height: 28px; fill: var(--primary-dark); }
-        .fast-text { font-size: 11px; font-weight: 500; color: var(--text-dark); text-align: center; line-height: 1.3;}
-
-        /* --- Content Card & Products --- */
-        .content-card { background: var(--surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 20px;}
-        .card-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--text-dark); margin-bottom: 16px; border-bottom: 1px dashed var(--border); padding-bottom: 12px;}
-        .card-title svg { width: 18px; height: 18px; fill: var(--primary); }
-
-        .product-list { display: flex; flex-direction: column; gap: 12px; }
-        .product-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--bg-color); cursor: pointer; transition: 0.2s;}
-        .product-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .product-row:active { opacity: 0.7; }
-        .p-info { display: flex; align-items: flex-start; gap: 12px; flex: 1;}
-        .p-bullet { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; margin-top: 8px; flex-shrink: 0;}
-        .p-details { flex: 1; }
-        .p-name { font-size: 13px; font-weight: 500; color: var(--text-dark); line-height: 1.4; margin-bottom: 4px;}
-        .p-stock { font-size: 11px; color: var(--text-muted); }
-        .p-price-wrap { text-align: right; }
-        .p-price { font-size: 14px; font-weight: 600; color: var(--primary); }
-        .p-qty-badge { background: var(--primary); color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; display: inline-block; margin-top: 4px;}
-
-        /* --- Bottom Navigation --- */
-        .bottom-nav-container { position: absolute; bottom: 0; left: 0; width: 100%; z-index: 100; padding-bottom: var(--safe-bottom); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border); }
-        .bottom-nav { display: flex; justify-content: space-around; align-items: flex-end; height: 65px; padding: 0 10px 10px 10px; position: relative;}
-        
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; color: var(--text-muted); font-size: 10px; font-weight: 500; cursor: pointer; transition: 0.2s; height: 100%; padding-bottom: 4px;}
-        .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; fill: currentColor; }
-        .nav-item.active { color: var(--primary-dark); }
-        
-        .nav-center-wrap { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; flex: 1; cursor: pointer; padding-bottom: 4px;}
-        .nav-center-btn { position: absolute; top: -25px; width: 60px; height: 60px; background: linear-gradient(135deg, #FF85A8, #E86A91); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 16px rgba(232, 106, 145, 0.4); border: 4px solid var(--bg-color); transition: 0.2s; z-index: 10;}
-        .nav-center-wrap:active .nav-center-btn { transform: scale(0.95); }
-        .nav-center-btn svg { width: 26px; height: 26px; fill: white; }
-        .nav-center-text { font-size: 10px; font-weight: 500; color: var(--text-muted); margin-top: auto; z-index: 1; transition: 0.2s;}
-        .nav-center-wrap.active .nav-center-text { color: var(--primary-dark); }
-        .cart-badge { position: absolute; top: -2px; right: -2px; background: #FF3B30; color: white; font-size: 11px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid var(--bg-color); display: none; z-index: 11; }
-
-        /* --- Buttons & Inputs --- */
-        .btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: var(--radius-pill); font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: var(--shadow-md); }
-        .btn:active { transform: scale(0.96); box-shadow: none; }
-        .btn:disabled { background: #E8D5DC; color: #AFA2A7; cursor: not-allowed; box-shadow: none; }
-        .btn-outline { background: var(--surface); color: var(--primary); border: 2px solid var(--primary); padding: 14px; border-radius: var(--radius-pill); font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-outline:active { background: var(--primary-light); }
-        
-        .input-group { margin-bottom: 16px; }
-        .input-label { display: block; color: var(--text-dark); margin-bottom: 8px; font-size: 13px; font-weight: 500; margin-left: 4px; }
-        .input-field { width: 100%; padding: 16px; background: var(--bg-color); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 14px; color: var(--text-dark); transition: 0.3s; }
-        .input-field:focus { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px var(--primary-light); }
-
-        /* --- Quantity Modal --- */
-        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(90, 42, 59, 0.4); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-end; z-index: 200; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-content { background: var(--surface); width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 30px 24px calc(30px + var(--safe-bottom)) 24px; animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.1);}
-        .qty-controls { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 30px 0; }
-        .qty-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--primary-light); border: none; color: var(--primary-dark); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;}
-        .qty-btn:active { background: var(--primary); color: white; transform: scale(0.9); }
-        .qty-btn svg { width: 24px; height: 24px; fill: currentColor; }
-        .qty-input { width: 80px; text-align: center; font-size: 28px; font-weight: 700; border: none; background: transparent; color: var(--text-dark); outline: none; }
-
-        /* --- Receipt (Slip) --- */
-        .slip-container { padding: 10px; margin-bottom: 20px; }
-        .slip-paper { background: #FFFFFF; padding: 30px 24px; position: relative; color: #333; font-family: monospace; border: 1px solid #E5E5E5; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .slip-paper::before, .slip-paper::after { content: ''; position: absolute; left: 0; width: 100%; height: 6px; background-size: 12px 100%; }
-        .slip-paper::before { top: -6px; background-image: linear-gradient(135deg, transparent 50%, #FFFFFF 50%), linear-gradient(-135deg, transparent 50%, #FFFFFF 50%); background-position: top left, top left; }
-        .slip-paper::after { bottom: -6px; background-image: linear-gradient(135deg, #FFFFFF 50%, transparent 50%), linear-gradient(-135deg, #FFFFFF 50%, transparent 50%); background-position: bottom left, bottom left; }
-        
-        .slip-header { text-align: center; border-bottom: 1px dashed #CCC; padding-bottom: 16px; margin-bottom: 16px; }
-        .slip-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-family: 'Mitr', sans-serif;}
-        .slip-row.sub { color: #888; font-size: 12px; margin-bottom: 12px; padding-left: 8px;}
-        .slip-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 600; margin-top: 16px; padding-top: 16px; border-top: 1px dashed #CCC; font-family: 'Mitr', sans-serif;}
-
-        /* --- Utils --- */
-        .toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #5A2A3B; color: white; padding: 12px 24px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.4s; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-md); white-space: nowrap;}
+        .toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--text-dark); color: white; padding: 12px 24px; border-radius: 99px; font-size: 13px; font-weight: 500; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.4s; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-md); white-space: nowrap;}
         .toast svg { width: 16px; height: 16px; fill: white; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); top: 40px; }
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;}
+
+        /* --- Scrollable Content --- */
+        .content-area { flex: 1; overflow-y: auto; padding: 0 20px calc(90px + var(--safe-bottom)) 20px; z-index: 10; scrollbar-width: none;}
+        .content-area::-webkit-scrollbar { display: none; }
+
+        /* --- Header (อิงจากภาพเรฟ) --- */
+        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 20px 0 20px; z-index: 10;}
+        .brand-title { font-weight: 700; color: var(--text-dark); font-size: 20px; letter-spacing: 0.5px; line-height: 1.2;}
+        .brand-sub { font-size: 11px; color: var(--primary); font-weight: 600; letter-spacing: 0.2px;}
+        .bell-icon { width: 36px; height: 36px; display: flex; justify-content: flex-end; align-items: center; cursor: pointer;}
+        .bell-icon svg { width: 22px; height: 22px; fill: var(--primary); }
+        .back-btn { position: absolute; left: 16px; top: 20px; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 20;}
+        .back-btn svg { width: 24px; height: 24px; fill: var(--text-dark); }
+
+        /* --- Welcome & Avatar --- */
+        .welcome-sec { text-align: center; margin: 15px 0 25px 0; }
+        .welcome-text { font-size: 16px; font-weight: 700; color: var(--text-dark); display: flex; justify-content: center; align-items: center; gap: 6px;}
+        .welcome-text svg { width: 18px; height: 18px; fill: var(--primary); }
+        .welcome-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-weight: 500;}
+        
+        .avatar-glow { width: 140px; height: 140px; border-radius: 50%; background: var(--surface); margin: 20px auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 30px rgba(242, 133, 164, 0.2); position: relative;}
+        .avatar-glow::before { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; background: linear-gradient(135deg, #FFF0F5, #FDE8EE); z-index: -1; }
+        .avatar-circle { width: 130px; height: 130px; border-radius: 50%; background: var(--bg-main); border: 2px solid var(--surface); display: flex; justify-content: center; align-items: center; overflow: hidden;}
+        .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-circle svg { width: 50px; height: 50px; fill: var(--primary-light); }
+
+        /* --- Fast Menu --- */
+        .fast-title { text-align: center; font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 12px; display: flex; justify-content: center; align-items: center; gap: 6px;}
+        .fast-title svg { width: 14px; height: 14px; fill: var(--primary); }
+        
+        .fast-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 25px;}
+        .fast-item { background: var(--surface); border-radius: 16px; padding: 14px 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); border: 2px solid transparent;}
+        .fast-item.active { border-color: var(--primary); background: var(--primary-light); }
+        .fast-icon { width: 38px; height: 38px; background: var(--primary-light); border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 8px;}
+        .fast-item.active .fast-icon { background: var(--surface); }
+        .fast-icon svg { width: 20px; height: 20px; fill: var(--primary); }
+        .fast-text { font-size: 10px; font-weight: 600; color: var(--text-dark); text-align: center; line-height: 1.3;}
+
+        /* --- Content Card (เหมือนเรฟที่มี Header สีชมพูอ่อน) --- */
+        .card-box { background: var(--surface); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-sm); margin-bottom: 20px;}
+        .card-header { background: var(--primary-light); padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-dark);}
+        .card-header svg { width: 18px; height: 18px; fill: var(--primary); }
+        .card-body { padding: 16px; }
+
+        /* --- Product List --- */
+        .product-list { display: flex; flex-direction: column; gap: 12px; }
+        .product-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--bg-main); cursor: pointer; transition: 0.2s;}
+        .product-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .p-info { display: flex; align-items: flex-start; gap: 10px; flex: 1;}
+        .p-bullet { width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; margin-top: 6px; flex-shrink: 0;}
+        .p-details { flex: 1; }
+        .p-name { font-size: 12px; font-weight: 500; color: var(--text-dark); line-height: 1.4; margin-bottom: 2px;}
+        .p-stock { font-size: 10px; color: var(--text-muted); }
+        .p-price { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+        .p-qty-badge { background: var(--primary); color: white; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 600; display: inline-block; margin-top: 4px;}
+
+        /* --- Bottom Navigation (ตามเรฟเป๊ะๆ) --- */
+        .bottom-nav-wrap { position: absolute; bottom: 0; left: 0; width: 100%; z-index: 100; padding-bottom: var(--safe-bottom); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(0,0,0,0.05); }
+        .bottom-nav { display: flex; justify-content: space-between; align-items: flex-end; height: 65px; padding: 0 10px 10px 10px; position: relative;}
+        
+        .nav-item { width: 20%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; color: #D1C5C9; font-size: 9px; font-weight: 600; cursor: pointer; transition: 0.2s; height: 100%; padding-bottom: 4px;}
+        .nav-item svg { width: 22px; height: 22px; margin-bottom: 4px; fill: currentColor; }
+        .nav-item.active { color: var(--primary); }
+        
+        /* ปุ่มลอยตรงกลาง */
+        .nav-center { width: 20%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; cursor: pointer; padding-bottom: 4px;}
+        .nav-center-btn { position: absolute; top: -25px; width: 56px; height: 56px; background: var(--primary-gradient); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: var(--shadow-md); border: 4px solid var(--surface); transition: 0.2s; z-index: 10;}
+        .nav-center:active .nav-center-btn { transform: scale(0.95); }
+        .nav-center-btn svg { width: 24px; height: 24px; fill: white; }
+        .nav-center-text { font-size: 9px; font-weight: 600; color: var(--text-muted); margin-top: auto; z-index: 1;}
+        .cart-badge { position: absolute; top: -2px; right: -2px; background: var(--text-dark); color: white; font-size: 10px; font-weight: bold; width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid var(--surface); display: none; z-index: 11; }
+
+        /* --- Buttons & Inputs --- */
+        .btn { background: var(--primary-gradient); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 600; width: 100%; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { background: #E8D5DC; color: #AFA2A7; cursor: not-allowed; box-shadow: none; }
+        .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        
+        .input-group { margin-bottom: 16px; }
+        .input-label { display: block; color: var(--text-dark); margin-bottom: 6px; font-size: 12px; font-weight: 500; margin-left: 4px; }
+        .input-field { width: 100%; padding: 14px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 12px; font-size: 13px; color: var(--text-dark); transition: 0.3s; }
+        .input-field:focus { border-color: var(--primary); background: var(--surface); }
+
+        /* --- Quantity Modal --- */
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(74, 43, 53, 0.5); backdrop-filter: blur(3px); display: none; justify-content: center; align-items: flex-end; z-index: 200; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { background: var(--surface); width: 100%; border-radius: 24px 24px 0 0; padding: 24px 24px calc(24px + var(--safe-bottom)) 24px; animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
+        .qty-controls { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 24px 0; }
+        .qty-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--primary-light); border: none; color: var(--primary); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;}
+        .qty-btn:active { background: var(--primary); color: white; transform: scale(0.9); }
+        .qty-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .qty-input { width: 70px; text-align: center; font-size: 24px; font-weight: 700; border: none; background: transparent; color: var(--text-dark); outline: none; }
+
+        /* --- Cart Info --- */
+        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--border); }
+        .cart-title { color: var(--text-dark); font-size: 12px; font-weight: 500; margin-bottom: 4px;}
+        .cart-price { color: var(--primary); font-size: 13px; font-weight: 600; }
+
+        /* --- Slip Design --- */
+        .slip-container { padding: 10px; margin-bottom: 20px; }
+        .slip-paper { background: #FFFFFF; padding: 24px; position: relative; color: #333; font-family: monospace; border: 1px solid #E5E5E5; box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
+        .slip-paper::before, .slip-paper::after { content: ''; position: absolute; left: 0; width: 100%; height: 5px; background-size: 10px 100%; }
+        .slip-paper::before { top: -5px; background-image: linear-gradient(135deg, transparent 50%, #FFFFFF 50%), linear-gradient(-135deg, transparent 50%, #FFFFFF 50%); background-position: top left, top left; }
+        .slip-paper::after { bottom: -5px; background-image: linear-gradient(135deg, #FFFFFF 50%, transparent 50%), linear-gradient(-135deg, #FFFFFF 50%, transparent 50%); background-position: bottom left, bottom left; }
+        
+        .slip-header { text-align: center; border-bottom: 1px dashed #CCC; padding-bottom: 12px; margin-bottom: 12px; }
+        .slip-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; font-family: 'Mitr', sans-serif;}
+        .slip-row.sub { color: #888; font-size: 11px; margin-bottom: 8px; padding-left: 8px;}
+        .slip-total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #CCC; font-family: 'Mitr', sans-serif;}
     </style>
 </head>
 <body>
@@ -170,27 +175,30 @@
         </div>
 
         <!-- ================= Login Page ================= -->
-        <div id="page-login" class="page active" style="justify-content: center; padding: 24px;">
-            <div class="welcome-section" style="margin-top: 0;">
-                <div style="font-weight: 700; color: var(--text-dark); font-size: 26px;">PINKJULIELAND</div>
-                <div style="font-size: 14px; color: var(--primary); font-weight: 500; margin-bottom: 20px;">Mobile Shop POS</div>
+        <div id="page-login" class="page active" style="justify-content: center; padding: 20px;">
+            <div class="welcome-sec" style="margin-top: 0;">
+                <div style="font-weight: 700; color: var(--text-dark); font-size: 24px;">PINKJULIELAND</div>
+                <div style="font-size: 12px; color: var(--primary); font-weight: 500; margin-bottom: 20px;">POS System Login</div>
                 
-                <div class="welcome-title">
-                    Welcome Admin 
-                    <svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2zm0 4.28l1.62 3.82 4.14.35-3.14 2.72.94 4.04-3.56-2.17-3.56 2.17.94-4.04-3.14-2.72 4.14-.35L12 6.28z"/></svg>
+                <div class="avatar-glow" style="margin-bottom: 30px;">
+                    <div class="avatar-circle">
+                        <img src="logo.png" alt="Pinkjulieland Logo">
+                    </div>
                 </div>
             </div>
             
-            <div class="content-card" style="margin-bottom: 0;">
-                <div class="input-group">
-                    <label class="input-label">อีเมลผู้ดูแลระบบ</label>
-                    <input type="email" id="login-email" class="input-field" placeholder="admin@pinkjulieland.com">
+            <div class="card-box">
+                <div class="card-body">
+                    <div class="input-group">
+                        <label class="input-label">อีเมลเข้าสู่ระบบ</label>
+                        <input type="email" id="login-email" class="input-field" placeholder="admin@pinkjulieland.com">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">รหัสผ่าน</label>
+                        <input type="password" id="login-pass" class="input-field" placeholder="••••••••">
+                    </div>
+                    <button class="btn" onclick="doLogin()" style="margin-top: 20px;">ลงชื่อเข้าใช้</button>
                 </div>
-                <div class="input-group">
-                    <label class="input-label">รหัสผ่าน</label>
-                    <input type="password" id="login-pass" class="input-field" placeholder="••••••••">
-                </div>
-                <button class="btn" onclick="doLogin()" style="margin-top: 24px;">เข้าสู่ระบบ</button>
             </div>
         </div>
 
@@ -198,7 +206,7 @@
         <div id="page-pos" class="page">
             <div class="top-bar">
                 <div>
-                    <div class="brand-name">PINKJULIELAND</div>
+                    <div class="brand-title">PINKJULIELAND</div>
                     <div class="brand-sub">Mobile Shop</div>
                 </div>
                 <div class="bell-icon" onclick="doLogout()" title="ออกจากระบบ">
@@ -207,25 +215,28 @@
             </div>
             
             <div class="content-area">
-                <div class="welcome-section">
-                    <div class="welcome-title">
+                <div class="welcome-sec">
+                    <div class="welcome-text">
                         Welcome to my shop 
+                        <!-- Bow SVG icon -->
                         <svg viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
                     </div>
-                    <div class="welcome-subtitle">ร้านรับทำเว็บไซต์ครบวงจร และจำหน่ายแอป</div>
+                    <div class="welcome-sub">ร้านรับทำเว็บไซต์ครบวงจร และจำหน่ายแอป</div>
+                    
+                    <div class="avatar-glow">
+                        <div class="avatar-circle">
+                            <img src="logo.png" alt="Pinkjulieland Logo">
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Fast Menu -->
-                <div class="fast-menu-title">
-                    <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+                <!-- Fast Menu (ตามเรฟ) -->
+                <div class="fast-title">
                     Fast Menu
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                 </div>
-                <div class="fast-menu-grid">
-                    <div class="fast-item active" onclick="filterCategory('all', this)">
-                        <div class="fast-icon"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></div>
-                        <div class="fast-text">ทั้งหมด</div>
-                    </div>
-                    <div class="fast-item" onclick="filterCategory('web', this)">
+                <div class="fast-grid">
+                    <div class="fast-item active" onclick="filterCategory('web', this)">
                         <div class="fast-icon"><svg viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg></div>
                         <div class="fast-text">รับทำ<br>เว็บไซต์</div>
                     </div>
@@ -237,16 +248,22 @@
                         <div class="fast-icon"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg></div>
                         <div class="fast-text">คอร์ส<br>สอนเว็บ</div>
                     </div>
+                    <div class="fast-item" onclick="filterCategory('all', this)">
+                        <div class="fast-icon"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></div>
+                        <div class="fast-text">บริการ<br>ทั้งหมด</div>
+                    </div>
                 </div>
 
-                <!-- Product List Card -->
-                <div class="content-card">
-                    <div class="card-title">
+                <!-- Content Card (รายการสินค้า) -->
+                <div class="card-box">
+                    <div class="card-header">
                         <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
-                        รายการบริการ
+                        รายการสินค้า & บริการ
                     </div>
-                    <div class="product-list" id="product-list">
-                        <!-- JS renders products here -->
+                    <div class="card-body">
+                        <div class="product-list" id="product-list">
+                            <!-- JS renders products here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -255,9 +272,9 @@
         <!-- ================= Quantity Modal ================= -->
         <div id="qty-modal" class="modal-overlay">
             <div class="modal-content">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div id="modal-p-name" style="font-size: 16px; font-weight: 600; color: var(--text-dark);">ชื่อสินค้า</div>
-                    <div id="modal-p-price" style="font-size: 18px; font-weight: 700; color: var(--primary); margin-top: 4px;">0.-</div>
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <div id="modal-p-name" style="font-size: 14px; font-weight: 600; color: var(--text-dark);">ชื่อสินค้า</div>
+                    <div id="modal-p-price" style="font-size: 16px; font-weight: 700; color: var(--primary); margin-top: 4px;">0.-</div>
                 </div>
                 
                 <div class="qty-controls">
@@ -266,7 +283,7 @@
                     <button class="qty-btn" onclick="adjustModalQty(1)"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
                 </div>
                 
-                <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button class="btn-outline" onclick="closeQtyModal()">ยกเลิก</button>
                     <button class="btn" onclick="confirmQtyModal()">เพิ่มลงตะกร้า</button>
                 </div>
@@ -275,25 +292,30 @@
 
         <!-- ================= Cart Page ================= -->
         <div id="page-cart" class="page">
-            <div class="top-bar" style="border-bottom: 1px solid var(--border); padding-bottom: 15px;">
-                <div class="brand-name" style="font-size: 18px;">ตะกร้าสั่งซื้อ</div>
+            <div class="top-bar" style="padding-bottom: 15px;">
+                <div class="brand-title" style="font-size: 18px;">ตะกร้าสั่งซื้อ</div>
             </div>
-            <div class="content-area" style="display: flex; flex-direction: column; padding-top: 20px;">
+            <div class="content-area" style="display: flex; flex-direction: column; padding-top: 10px;">
                 
-                <div class="content-card" style="flex: 1; display: flex; flex-direction: column; padding: 20px 16px;">
-                    <div class="card-title" style="font-size: 14px;">รายการที่เลือก</div>
-                    <div style="flex: 1; overflow-y: auto; margin-bottom: 15px;" id="cart-list"></div>
-                    
-                    <div style="border-top: 2px dashed var(--border); padding-top: 15px; margin-top: auto;">
-                        <div class="input-group" style="margin-bottom: 20px;">
-                            <label class="input-label">ชื่อลูกค้า / ข้อมูลติดต่อ</label>
-                            <input type="text" id="customer-name" class="input-field" placeholder="ระบุชื่อลูกค้า...">
+                <div class="card-box" style="flex: 1; display: flex; flex-direction: column;">
+                    <div class="card-header">
+                        <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0 0 20 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                        รายการที่เลือก
+                    </div>
+                    <div class="card-body" style="flex: 1; display: flex; flex-direction: column; padding-bottom: 20px;">
+                        <div style="flex: 1; overflow-y: auto; margin-bottom: 15px;" id="cart-list"></div>
+                        
+                        <div style="border-top: 1px dashed var(--border); padding-top: 15px; margin-top: auto;">
+                            <div class="input-group" style="margin-bottom: 16px;">
+                                <label class="input-label">ชื่อลูกค้า / ข้อมูลติดต่อ</label>
+                                <input type="text" id="customer-name" class="input-field" placeholder="ระบุชื่อลูกค้า...">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
+                                <span style="color: var(--text-dark); font-size: 13px; font-weight: 500;">ยอดรวมทั้งสิ้น</span>
+                                <span style="color: var(--primary); font-size: 22px; font-weight: 700; line-height: 1;" id="cart-total">0.-</span>
+                            </div>
+                            <button class="btn" id="btn-pay" onclick="doCheckout()">สร้างบิล (ตัดสต๊อกระบบ)</button>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-                            <span style="color: var(--text-muted); font-size: 14px; font-weight: 500;">ยอดรวมทั้งสิ้น</span>
-                            <span style="color: var(--primary-dark); font-size: 26px; font-weight: 700; line-height: 1;" id="cart-total">0.-</span>
-                        </div>
-                        <button class="btn" id="btn-pay" onclick="doCheckout()">สร้างบิลคำสั่งซื้อ (บันทึกเข้าระบบ)</button>
                     </div>
                 </div>
             </div>
@@ -301,24 +323,29 @@
 
         <!-- ================= Bills History Page ================= -->
         <div id="page-bills" class="page">
-            <div class="top-bar" style="border-bottom: 1px solid var(--border); padding-bottom: 15px;">
-                <div class="brand-name" style="font-size: 18px;">ประวัติบิล (เชื่อมฐานข้อมูล)</div>
+            <div class="top-bar" style="padding-bottom: 15px;">
+                <div class="brand-title" style="font-size: 18px;">ประวัติบิล (Supabase)</div>
             </div>
-            <div class="content-area" style="padding-top: 20px;">
-                <div class="content-card" style="padding: 16px;">
-                    <div id="bills-list"></div>
+            <div class="content-area" style="padding-top: 10px;">
+                <div class="card-box">
+                    <div class="card-header">
+                        <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                        รายการขายล่าสุด
+                    </div>
+                    <div class="card-body">
+                        <div id="bills-list" class="product-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- ================= Bill Detail (Slip) ================= -->
         <div id="page-bill-detail" class="page">
-            <div class="top-bar" style="padding-bottom: 10px;">
-                <div class="icon-btn" onclick="switchTab('bills')">
-                    <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
-                </div>
-                <div class="brand-name" style="font-size: 16px;">จัดการใบเสร็จ</div>
-                <div style="width: 40px;"></div>
+            <div class="back-btn" onclick="switchTab('bills')">
+                <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+            </div>
+            <div class="top-bar" style="justify-content: center; padding-bottom: 15px; padding-top: 30px;">
+                <div class="brand-title" style="font-size: 16px;">จัดการใบเสร็จ</div>
             </div>
             
             <div class="content-area" style="padding-top: 10px;">
@@ -328,35 +355,41 @@
                     </div>
                 </div>
 
-                <div class="action-grid">
-                    <button class="btn-outline" onclick="downloadImage()" style="font-size: 13px;">
-                        <svg viewBox="0 0 24 24" style="width: 18px;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                        โหลดรูป (JPG)
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                    <button class="btn-outline" onclick="downloadImage()">
+                        <svg viewBox="0 0 24 24" style="width: 16px;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                        โหลดรูป
                     </button>
-                    <button class="btn-outline" onclick="downloadPDF()" style="font-size: 13px;">
-                        <svg viewBox="0 0 24 24" style="width: 18px;"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
+                    <button class="btn-outline" onclick="downloadPDF()">
+                        <svg viewBox="0 0 24 24" style="width: 16px;"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
                         โหลด PDF
                     </button>
                 </div>
                 
-                <button class="btn" onclick="copyOrderData()" style="margin-bottom: 12px;">
+                <button class="btn" onclick="copyOrderData()">
                     <svg viewBox="0 0 24 24" style="width: 18px; fill: white;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                     คัดลอกข้อความ + เงื่อนไข
                 </button>
             </div>
         </div>
 
-        <!-- ================= Bottom Navigation ================= -->
-        <div class="bottom-nav-container" id="bottom-nav" style="display: none;">
+        <!-- ================= Bottom Navigation (เรฟเป๊ะๆ 5 เมนู) ================= -->
+        <div class="bottom-nav-wrap" id="bottom-nav" style="display: none;">
             <div class="bottom-nav">
-                <!-- Tab 1: Home -->
+                <!-- Tab 1: หน้าแรก -->
                 <div class="nav-item active" id="tab-pos" onclick="switchTab('pos')">
                     <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                     หน้าแรก
                 </div>
                 
-                <!-- Center Floating Action Button (Cart) -->
-                <div class="nav-center-wrap" id="tab-cart" onclick="switchTab('cart')">
+                <!-- Tab 2: ประวัติบิล (แทนรูปโน้ตบุ๊ก) -->
+                <div class="nav-item" id="tab-bills" onclick="switchTab('bills')">
+                    <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                    ประวัติบิล
+                </div>
+
+                <!-- Center: บริการทั้งหมด (ตะกร้า) -->
+                <div class="nav-center" id="tab-cart" onclick="switchTab('cart')">
                     <div class="nav-center-btn">
                         <div class="cart-badge" id="cart-badge">0</div>
                         <svg viewBox="0 0 24 24"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
@@ -364,10 +397,16 @@
                     <div class="nav-center-text">ตะกร้าสั่งซื้อ</div>
                 </div>
 
-                <!-- Tab 2: Bills -->
-                <div class="nav-item" id="tab-bills" onclick="switchTab('bills')">
-                    <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                    ประวัติบิล
+                <!-- Tab 4: สต๊อก (แทนแอป GN) -->
+                <div class="nav-item" onclick="filterCategory('app', document.querySelector('.fast-item:nth-child(2)')); switchTab('pos');">
+                    <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                    แอป GN
+                </div>
+
+                <!-- Tab 5: ติดต่อ (ออกจากระบบ) -->
+                <div class="nav-item" onclick="doLogout()">
+                    <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                    ออกระบบ
                 </div>
             </div>
         </div>
@@ -378,7 +417,7 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        // ตั้งค่า Supabase
+        // ตั้งค่า Supabase (ใช้ API ตัวเดิมที่ให้มา)
         const SUPABASE_URL = 'https://qrttkykdkzgpvvqswtza.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFydHRreWtka3pncHZ2cXN3dHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwOTI2NzgsImV4cCI6MjA5MDY2ODY3OH0.FDLDA4BdYcxfSsotTXKZwDF1EjJ6AO0qmFyrGkV3Mj4';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -386,33 +425,12 @@
         let currentUser = null;
         let cart = [];
         let billsHistory = [];
-        let currentFilter = 'all';
+        let currentFilter = 'web'; // เริ่มต้นที่หมวด 'รับทำเว็บ' ให้เหมือนในภาพ
         let currentProductForModal = null;
         let currentBillToPrint = null;
         let billTextForCopy = '';
 
-        // ข้อมูลสินค้าแบบฝัง เพื่อให้หมวดหมู่ใหม่ทำงานได้เลยโดยไม่ต้องแก้ฐานข้อมูล
-        const dbProducts = [
-            { id: 'w1', name: 'เว็บเริ่มต้น (≤200 lines)', price: 129, stock: null, cat: 'web' },
-            { id: 'w2', name: 'เว็บกลาง (201-400 lines)', price: 139, stock: null, cat: 'web' },
-            { id: 'w3', name: 'เว็บใหญ่ (401-600 lines)', price: 189, stock: null, cat: 'web' },
-            { id: 'w4', name: 'เว็บพรีเมียม (>600 lines)', price: 249, stock: null, cat: 'web' },
-            { id: 'w5', name: 'โปรเซ็ต 3 เว็บสุดคุ้ม', price: 359, stock: null, cat: 'web' },
-            { id: 'w6', name: '+Add on: แบนเนอร์ 1-2 รูป', price: 29, stock: null, cat: 'web' },
-            { id: 'w7', name: '+Add on: ออกแบบใหม่', price: 200, stock: null, cat: 'web' },
-            { id: 'w8', name: 'ค่าปรับ: แก้ข้อความ (ต่อจุด)', price: 5, stock: null, cat: 'web' },
-            { id: 'w9', name: 'ค่าปรับ: เปลี่ยนรูป (ต่อรูป)', price: 29, stock: null, cat: 'web' },
-            { id: 'c1', name: 'คอร์สสอนทำเว็บสไตล์พิ้งจู (โปร)', price: 299, stock: null, cat: 'course' },
-            { id: 'g1', name: 'GN ถาวร (เมลรวม)', price: 20, stock: null, cat: 'app' },
-            { id: 'g2', name: 'GN ถาวร (หาร 5 คน)', price: 149, stock: 5, cat: 'app' },
-            { id: 'g3', name: 'GN ถาวร (ส่วนตัว)', price: 490, stock: null, cat: 'app' },
-            { id: 'g4', name: 'GN Essential รายปี (เมลรวม)', price: 20, stock: null, cat: 'app' },
-            { id: 'g5', name: 'GN Essential รายปี (หาร 5 คน)', price: 79, stock: 5, cat: 'app' },
-            { id: 'g6', name: 'GN Essential รายปี (ส่วนตัว)', price: 229, stock: null, cat: 'app' },
-            { id: 'g7', name: 'GN Pro รายปี (เมลรวม)', price: 20, stock: null, cat: 'app' },
-            { id: 'g8', name: 'GN Pro รายปี (หาร 5 คน)', price: 149, stock: 5, cat: 'app' },
-            { id: 'g9', name: 'GN Pro รายปี (ส่วนตัว)', price: 490, stock: null, cat: 'app' }
-        ];
+        let dbProducts = [];
 
         // --- Utils ---
         const showLoader = (show) => document.getElementById('loader').style.display = show ? 'flex' : 'none';
@@ -422,12 +440,39 @@
             t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000);
         };
 
-        // --- Auth (Supabase Connected) ---
+        // --- Fetch Products from DB ---
+        async function loadProductsFromDB() {
+            showLoader(true);
+            try {
+                const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: true });
+                if (error) throw error;
+                
+                dbProducts = data.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    price: p.price,
+                    stock: p.is_limited ? p.stock : null,
+                    cat: p.category || 'all',
+                    image_url: p.image_url || null
+                }));
+                
+                if (document.getElementById('page-pos').classList.contains('active')) {
+                    window.renderProducts();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('ดึงข้อมูลสินค้าไม่สำเร็จ');
+            }
+            showLoader(false);
+        }
+
+        // --- Auth ---
         async function checkSession() {
             showLoader(true);
             const { data: { session } } = await supabase.auth.getSession();
             if (session) { 
                 currentUser = session.user; 
+                await loadProductsFromDB();
                 window.switchTab('pos'); 
             } else { 
                 window.switchTab('login'); 
@@ -448,6 +493,7 @@
                 currentUser = data.user;
                 document.getElementById('login-email').value = '';
                 document.getElementById('login-pass').value = '';
+                await loadProductsFromDB();
                 window.switchTab('pos');
                 showToast('เข้าสู่ระบบสำเร็จ');
             }
@@ -470,11 +516,11 @@
             if (tab === 'login' || tab === 'bill-detail') {
                 document.getElementById('bottom-nav').style.display = 'none';
             } else {
-                document.getElementById('bottom-nav').style.display = 'block';
-                document.querySelectorAll('.nav-item, .nav-center-wrap').forEach(el => el.classList.remove('active'));
+                document.getElementById('bottom-nav').style.display = 'flex';
+                document.querySelectorAll('.nav-item, .nav-center').forEach(el => el.classList.remove('active'));
                 if(document.getElementById(`tab-${tab}`)) document.getElementById(`tab-${tab}`).classList.add('active');
                 
-                if (tab === 'pos') window.renderProducts();
+                if (tab === 'pos') { loadProductsFromDB(); }
                 if (tab === 'cart') window.renderCart();
                 if (tab === 'bills') loadBillsFromDB();
             }
@@ -491,22 +537,36 @@
         window.renderProducts = () => {
             const list = document.getElementById('product-list');
             list.innerHTML = '';
+            
+            if (dbProducts.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted); font-size: 12px;">ยังไม่มีสินค้าในระบบ</div>';
+                return;
+            }
+
             const filtered = currentFilter === 'all' ? dbProducts : dbProducts.filter(p => p.cat === currentFilter);
             
+            if (filtered.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted); font-size: 12px;">ไม่มีสินค้าหมวดหมู่นี้</div>';
+                return;
+            }
+
             filtered.forEach(p => {
+                const isOut = p.stock !== null && p.stock <= 0;
                 const cItem = cart.find(i => i.id === p.id);
                 const qty = cItem ? cItem.qty : 0;
                 
                 let stockText = p.stock !== null ? `จำกัด ${p.stock}` : 'ไม่จำกัดสต๊อก';
+                if (isOut) stockText = 'สินค้าหมด';
+
                 let qBadge = qty > 0 ? `<div class="p-qty-badge">ในตะกร้า: ${qty}</div>` : '';
                 
                 list.innerHTML += `
-                    <div class="product-row" onclick="openQtyModal('${p.id}')">
+                    <div class="product-row" onclick="${isOut ? '' : `openQtyModal('${p.id}')`}" style="${isOut ? 'opacity: 0.5;' : ''}">
                         <div class="p-info">
                             <div class="p-bullet"></div>
                             <div class="p-details">
                                 <div class="p-name">${p.name}</div>
-                                <div class="p-stock">${stockText} ${qBadge}</div>
+                                <div class="p-stock" style="${isOut ? 'color: #FF3B30;' : ''}">${stockText} ${qBadge}</div>
                             </div>
                         </div>
                         <div class="p-price-wrap">
@@ -519,7 +579,7 @@
 
         // --- Modal ---
         window.openQtyModal = (id) => {
-            currentProductForModal = dbProducts.find(x => x.id === id);
+            currentProductForModal = dbProducts.find(x => x.id == id);
             document.getElementById('modal-p-name').innerText = currentProductForModal.name;
             document.getElementById('modal-p-price').innerText = currentProductForModal.price + '.-';
             document.getElementById('modal-qty-input').value = 1;
@@ -531,12 +591,31 @@
         window.adjustModalQty = (change) => {
             let input = document.getElementById('modal-qty-input');
             let val = parseInt(input.value) + change;
+            
+            if (currentProductForModal && currentProductForModal.stock !== null) {
+                const existingItem = cart.find(i => i.id === currentProductForModal.id);
+                const currentCartQty = existingItem ? existingItem.qty : 0;
+                if (val + currentCartQty > currentProductForModal.stock) {
+                    showToast('จำนวนเกินสต๊อกที่มี');
+                    return;
+                }
+            }
             if(val >= 1) input.value = val;
         };
 
         window.validateModalQty = () => {
             let input = document.getElementById('modal-qty-input');
-            if(parseInt(input.value) < 1 || isNaN(input.value)) input.value = 1;
+            let val = parseInt(input.value);
+            if(val < 1 || isNaN(val)) {
+                input.value = 1;
+            } else if (currentProductForModal && currentProductForModal.stock !== null) {
+                const existingItem = cart.find(i => i.id === currentProductForModal.id);
+                const currentCartQty = existingItem ? existingItem.qty : 0;
+                if (val + currentCartQty > currentProductForModal.stock) {
+                    input.value = currentProductForModal.stock - currentCartQty;
+                    showToast('ปรับจำนวนตามสต๊อกคงเหลือ');
+                }
+            }
         };
 
         window.confirmQtyModal = () => {
@@ -544,6 +623,13 @@
             const qty = parseInt(document.getElementById('modal-qty-input').value);
             
             const existItem = cart.find(i => i.id === currentProductForModal.id);
+            const totalRequested = (existItem ? existItem.qty : 0) + qty;
+
+            if (currentProductForModal.stock !== null && totalRequested > currentProductForModal.stock) {
+                showToast('จำนวนเกินสต๊อกคงเหลือ');
+                return;
+            }
+
             if(existItem) existItem.qty += qty;
             else cart.push({ ...currentProductForModal, qty: qty });
             
@@ -569,7 +655,7 @@
             const list = document.getElementById('cart-list');
             let sum = 0;
             if(cart.length === 0) {
-                list.innerHTML = `<div style="text-align:center; padding: 30px; color: var(--text-muted); font-size: 13px;">ตระกร้าว่างเปล่า</div>`;
+                list.innerHTML = `<div style="text-align:center; padding: 30px; color: var(--text-muted); font-size: 12px;">ตระกร้าว่างเปล่า</div>`;
                 document.getElementById('cart-total').innerText = '0.-';
                 document.getElementById('btn-pay').disabled = true; return;
             }
@@ -578,14 +664,14 @@
                 sum += i.price * i.qty;
                 list.innerHTML += `
                     <div class="cart-row">
-                        <div class="cart-info">
+                        <div style="flex:1; padding-right:12px;">
                             <div class="cart-title">${i.name}</div>
                             <div class="cart-price">${i.price}.-</div>
                         </div>
-                        <div style="display:flex; align-items:center; background:var(--bg-color); border-radius:var(--radius-pill); padding:4px;">
-                            <button class="btn-outline" style="border:none; width:28px; height:28px; padding:0; background:transparent;" onclick="updateCartQty('${i.id}', -1)">-</button>
-                            <div style="width:30px; text-align:center; font-weight:600; font-size:14px; color:var(--text-dark);">${i.qty}</div>
-                            <button class="btn-outline" style="border:none; width:28px; height:28px; padding:0; background:transparent;" onclick="updateCartQty('${i.id}', 1)">+</button>
+                        <div style="display:flex; align-items:center; background:var(--bg-main); border-radius:var(--radius-pill); padding:4px;">
+                            <button class="btn-outline" style="border:none; width:24px; height:24px; padding:0; background:transparent;" onclick="updateCartQty('${i.id}', -1)">-</button>
+                            <div style="width:24px; text-align:center; font-weight:600; font-size:12px; color:var(--text-dark);">${i.qty}</div>
+                            <button class="btn-outline" style="border:none; width:24px; height:24px; padding:0; background:transparent;" onclick="updateCartQty('${i.id}', 1)">+</button>
                         </div>
                     </div>`;
             });
@@ -601,25 +687,31 @@
             
             showLoader(true);
             try {
-                // สร้างเลขบิลรันจาก DB
                 const { count } = await supabase.from('bills').select('*', { count: 'exact', head: true });
                 const bNo = 'PJ' + String((count || 0) + 1).padStart(4, '0');
 
-                // บันทึกบิลลงฐานข้อมูล
                 const { data: billData, error: billErr } = await supabase.from('bills')
                     .insert([{ bill_number: bNo, customer_name: cus, total: sum, created_by: currentUser.id }])
                     .select().single();
                 if (billErr) throw billErr;
 
-                // บันทึกรายการสินค้าลงฐานข้อมูล
                 const itemsToInsert = cart.map(i => ({ bill_id: billData.id, product_name: i.name, price: i.price, qty: i.qty }));
                 await supabase.from('bill_items').insert(itemsToInsert);
 
-                // พิมพ์บิลใน UI ทันที
+                // ตัดสต๊อก
+                for (let item of cart) {
+                    if (item.stock !== null) {
+                        const newStock = item.stock - item.qty;
+                        await supabase.from('products').update({ stock: newStock }).eq('id', item.id);
+                    }
+                }
+
                 const printBill = { id: bNo, cus: cus, total: sum, date: new Date().toLocaleString('th-TH'), items: [...cart] };
                 
                 cart = []; updateBadge(); document.getElementById('customer-name').value = '';
-                showToast('สร้างออเดอร์สำเร็จ (บันทึกลงระบบแล้ว)');
+                showToast('สร้างบิลสำเร็จ');
+                
+                await loadProductsFromDB();
                 window.openBillDetail(printBill);
 
             } catch (err) {
@@ -629,22 +721,22 @@
             showLoader(false);
         };
 
-        // --- Fetch Bills from DB ---
+        // --- Fetch Bills ---
         async function loadBillsFromDB() {
             showLoader(true);
             const { data } = await supabase.from('bills').select('*').order('created_at', { ascending: false });
             billsHistory = data || [];
             
             const list = document.getElementById('bills-list');
-            if(billsHistory.length === 0) { list.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 20px; font-size:13px;">ยังไม่มีประวัติบิล</div>'; showLoader(false); return; }
+            if(billsHistory.length === 0) { list.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 20px; font-size:12px;">ยังไม่มีประวัติบิล</div>'; showLoader(false); return; }
             
             list.innerHTML = '';
             billsHistory.forEach(b => {
                 const dateStr = new Date(b.created_at).toLocaleDateString('th-TH');
                 list.innerHTML += `
-                    <div class="product-row" onclick='openBillDetailFromDB("${b.id}")' style="border-bottom: 1px solid var(--border);">
+                    <div class="product-row" onclick='openBillDetailFromDB("${b.id}")'>
                         <div class="p-info">
-                            <div class="p-bullet" style="background:var(--text-muted);"></div>
+                            <div class="p-bullet"></div>
                             <div class="p-details">
                                 <div class="p-name">#${b.bill_number}</div>
                                 <div class="p-stock">${b.customer_name}</div>
@@ -652,7 +744,7 @@
                         </div>
                         <div class="p-price-wrap">
                             <div class="p-price">${b.total.toLocaleString()}.-</div>
-                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">${dateStr}</div>
+                            <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">${dateStr}</div>
                         </div>
                     </div>
                 `;
@@ -678,7 +770,7 @@
             showLoader(false);
         };
 
-        // --- Receipt Rendering (Star Icon update included) ---
+        // --- Receipt ---
         window.openBillDetail = (bill) => {
             currentBillToPrint = bill;
             let html = '', txtItems = '';
@@ -691,19 +783,18 @@
             });
             
             document.getElementById('receipt-content').innerHTML = `
-                <div style="text-align:center; margin-bottom:16px;">
-                    <!-- Star Icon -->
-                    <svg viewBox="0 0 24 24" style="width:40px; fill:#333;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                <div style="text-align:center; margin-bottom:12px; display:flex; justify-content:center;">
+                    <img src="logo.png" style="width:45px; height:45px; border-radius:50%; object-fit:cover;" alt="Logo">
                 </div>
                 <div class="slip-header">
-                    <div style="font-size:16px; font-weight:700; margin-bottom:4px; font-family:'Mitr', sans-serif;">PINKJULIELAND</div>
-                    <div style="font-size:12px; color:#888;">RECEIPT</div>
+                    <div style="font-size:14px; font-weight:700; margin-bottom:2px; font-family:'Mitr', sans-serif;">PINKJULIELAND</div>
+                    <div style="font-size:11px; color:#888;">RECEIPT</div>
                 </div>
-                <div style="font-size:13px; margin-bottom:4px;">No: ${bill.id}</div>
-                <div style="font-size:13px; margin-bottom:4px;">Date: ${bill.date}</div>
-                <div style="font-size:13px; margin-bottom:16px; font-family:'Mitr', sans-serif;">Cust: ${bill.cus}</div>
+                <div style="font-size:12px; margin-bottom:4px;">No: ${bill.id}</div>
+                <div style="font-size:12px; margin-bottom:4px;">Date: ${bill.date}</div>
+                <div style="font-size:12px; margin-bottom:12px; font-family:'Mitr', sans-serif;">Cust: ${bill.cus}</div>
                 
-                <div style="border-top:1px dashed #CCC; padding-top:16px; margin-bottom:16px;">
+                <div style="border-top:1px dashed #CCC; padding-top:12px; margin-bottom:12px;">
                     ${html}
                 </div>
                 
@@ -711,7 +802,7 @@
                     <span>TOTAL</span>
                     <span>${bill.total.toLocaleString()} THB</span>
                 </div>
-                <div style="text-align:center; font-size:12px; color:#888; margin-top:24px; font-family:'Mitr', sans-serif;">
+                <div style="text-align:center; font-size:11px; color:#888; margin-top:20px; font-family:'Mitr', sans-serif;">
                     ขอบคุณที่ใช้บริการค่ะ
                 </div>
             `;
@@ -750,10 +841,12 @@
             html2pdf().set(opt).from(receipt).save();
         };
 
-        // Initialize Session Check
-        window.onload = checkSession;
+        window.onload = () => {
+            // ค่าเริ่มต้นให้คลิกหมวด "รับทำเว็บ" ไว้ก่อนเหมือนภาพเรฟ
+            const webCatBtn = document.querySelector('.fast-item:nth-child(2)');
+            if(webCatBtn) filterCategory('web', webCatBtn);
+            checkSession();
+        };
     </script>
 </body>
 </html>
-
-
